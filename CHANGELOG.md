@@ -1,5 +1,33 @@
 # Changelog
 
+## [3.36.0](https://github.com/openai/openai-python/compare/v3.35.1...v3.36.0) (2026-10-20)
+
+
+### Features
+
+* **api:** add 30-minute cache-write usage counts ([#4111](https://github.com/openai/openai-python/issues/4111)) ([5589146](https://github.com/openai/openai-python/commit/5589146d738e0c38758e117b8383a02c2e4e2ee7))
+* **types:** prepare native synchronous WebSocket option type ([#4118](https://github.com/openai/openai-python/issues/4118)) ([90c0bac](https://github.com/openai/openai-python/commit/90c0bacc07ddd5662598db52b3c3011973011973))
+
+
+### Bug Fixes
+
+* **api:** accept canonical batch responses in strict mode ([#4106](https://github.com/openai/openai-python/issues/4106)) ([6eaa90e](https://github.com/openai/openai-python/commit/6eaa90ee20b40bbe84a5b1a5031d7cf672c7d368))
+* preserve declared aliases during Pydantic v1 validation ([#4119](https://github.com/openai/openai-python/issues/4119)) ([8b1cac9](https://github.com/openai/openai-python/commit/8b1cac931ccb32203010471b1f9d82e5c9957cff))
+* preserve WebSocket close across recovery and cancellation ([#4117](https://github.com/openai/openai-python/issues/4117)) ([4590ff1](https://github.com/openai/openai-python/commit/4590ff15006dfef3b55f4dc8b1b95c4a790d021b))
+* **realtime:** honor native options for legacy beta sockets ([#4120](https://github.com/openai/openai-python/issues/4120)) ([8968560](https://github.com/openai/openai-python/commit/8968560fb926240aea5fed8ee24e189eade57118))
+
+
+### Chores
+
+* **api:** use neutral moderation examples ([#4104](https://github.com/openai/openai-python/issues/4104)) ([553703e](https://github.com/openai/openai-python/commit/553703e2d3db379a83e3ead9e40436b7a66f639e))
+* restore generated Castiron reporting scripts ([#4113](https://github.com/openai/openai-python/issues/4113)) ([9d12b56](https://github.com/openai/openai-python/commit/9d12b565554c08bcee6287c0d8f671b8c97ed911))
+
+
+### Documentation
+
+* plan the Python generated-code transition ([#4114](https://github.com/openai/openai-python/issues/4114)) ([6a52987](https://github.com/openai/openai-python/commit/6a52987f2da5c3bc9b700a7094c0cf14fe7e78dc))
+* record Python transition progress and batch follow-up work ([#4116](https://github.com/openai/openai-python/issues/4116)) ([46e3680](https://github.com/openai/openai-python/commit/46e36800ba5604044de46c88dc79f20dfd23dd35))
+
 ## [3.35.1](https://github.com/openai/openai-python/compare/v3.35.0...v3.35.1) (2026-10-18)
 
 
