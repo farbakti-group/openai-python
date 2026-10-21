@@ -38,6 +38,13 @@ DOCUMENTS = [
 ]
 PAGES = {name: ROOT / name for name in DOCUMENTS if (ROOT / name).is_file()}
 
+FAVICON = (
+    b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+    b'<rect width="32" height="32" rx="7" fill="#0a6cff"/>'
+    b'<path d="M16 7 8 25h4.2l1.5-3.6h4.6L19.8 25H24Z" fill="#fff"/>'
+    b'</svg>'
+)
+
 LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 CODE = re.compile(r"`([^`]+)`")
 HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
@@ -110,6 +117,7 @@ def page(title: str, body: str, current: str) -> bytes:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>{html.escape(title)} — openai-python SDK preview</title>
 <style>
   :root {{ color-scheme: light dark; }}
@@ -138,6 +146,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         name = path.lstrip("/") or "README.md"
+        if name in ("favicon.webp", "favicon.ico", "favicon.svg"):
+            self.send_response(200)
+            self.send_header("Content-Type", "image/svg+xml")
+            self.send_header("Cache-Control", "max-age=3600")
+            self.send_header("Content-Length", str(len(FAVICON)))
+            self.end_headers()
+            self.wfile.write(FAVICON)
+            return
         target = PAGES.get(name)
         if target is None:
             self.send_response(404)
