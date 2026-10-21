@@ -1,0 +1,12 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "OPENAI_API_KEY",
+      "description": "OpenAI API key for the Fieldwork dashboard's Live API mode. Optional: without it the dashboard still runs Local rehearsal, which makes no API request.",
+      "requiredAtBoot": false
+    }
+  ]
+}

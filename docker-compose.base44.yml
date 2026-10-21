@@ -1,0 +1,62 @@
+# Base44 sandbox environment for this repository. Development only — see AGENTS.md,
+# "Base44 preview sandbox".
+#
+# This repository is a Python SDK (a library) plus example scripts, so the preview entry
+# point is the repository's own browser-automation dashboard (examples/browser-use-demo,
+# "Fieldwork"), served on host port 3000 by .base44/serve_fieldwork.sh. The checkout is
+# bind-mounted and the SDK is installed editable from it, so source edits stay live.
+name: openai-python-base44
+
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: .base44/Dockerfile
+    working_dir: /app
+    # Root only long enough to let the unprivileged user run the app: the mounted
+    # checkout arrives mode 0700, and Chromium's sandbox refuses to run as root.
+    command:
+      - sh
+      - -ec
+      - |
+        chmod 755 /app
+        exec runuser -u app -- bash /app/.base44/serve_fieldwork.sh
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - uv-cache:/home/app/.cache/uv
+      - python-environment:/opt/venv
+    environment:
+      - BASE44_PREVIEW_MODE
+      - PREVIEW_PORT=3000
+      - DEMO_PORT=8642
+      - HOME=/home/app
+      - TMPDIR=/tmp
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - UV_PROJECT_ENVIRONMENT=/opt/venv
+    env_file:
+      - path: ./.env.base44-defaults
+      # Platform-managed secrets. Absent until the user supplies any, so optional here;
+      # it is listed last so a dashboard value always wins over the defaults above.
+      - path: /run/base44/app.env
+        required: false
+    # Chromium's own sandbox needs a user namespace, which Docker's default seccomp
+    # profile permits only with CAP_SYS_ADMIN. The sandbox itself stays enabled; see
+    # AGENTS.md for why this mirrors the repository's CI sandbox setup.
+    cap_add:
+      - SYS_ADMIN
+    shm_size: "1gb"
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsSL http://127.0.0.1:3000/ | grep -q 'Browser work, made visible'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  uv-cache:
+  python-environment:

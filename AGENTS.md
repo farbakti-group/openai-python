@@ -126,3 +126,53 @@ image generation. Their high memory use is intentional: do not shrink the
 payloads or raise client limits to make the tests pass. Keep coverage to the main
 JSON and streaming categories, and run large cases sequentially to keep peak
 memory reasonable. The fixture size is a regression probe, not a new API maximum.
+
+## Base44 preview sandbox
+
+`docker-compose.base44.yml` runs this repository in the Base44 preview sandbox. It is
+development-only tooling: nothing under `.base44/` ships with the SDK, and none of it
+changes SDK behaviour.
+
+This repository is a library plus example scripts, so the preview entry point (host port
+3000) is the repository's own browser-automation dashboard, `examples/browser-use-demo`
+("Fieldwork"), started by `.base44/serve_fieldwork.sh`.
+
+- Start / stop: `docker compose -f docker-compose.base44.yml up -d --build` /
+  `docker compose -f docker-compose.base44.yml down`. Logs:
+  `docker compose -f docker-compose.base44.yml logs -f demo`.
+- The `demo` service builds `.base44/Dockerfile` (python:3.12-slim, pinned uv, Playwright
+  Chromium). The image copies no source: the checkout is bind-mounted at `/app` and
+  `uv sync --locked --group browser-demo` runs from the committed lockfile at startup, so
+  `src/openai` stays editable and edits are live on the next restart.
+- Verify the environment beyond the compose healthcheck (which loads the dashboard page)
+  by running the example's own checks inside the container with real Chromium:
+
+  ```sh
+  docker compose -f docker-compose.base44.yml exec -T -u app demo \
+    bash -lc 'cd /app && uv run --locked --group browser-demo python scripts/check-example-security.py demo'
+  ```
+
+- There is no file-watching dev server for a Python library: after editing SDK or example
+  sources, restart the service
+  (`docker compose -f docker-compose.base44.yml restart demo`) to pick them up.
+
+### Sandbox-only adaptations (do not port these to the SDK)
+
+- **Dashboard entry point.** `examples/browser-use-demo/server.py` is written for a local
+  terminal: it binds `127.0.0.1`, accepts only that origin, and gates its dashboard behind
+  a private token it prints when attached to a terminal. `.base44/serve_fieldwork.sh`
+  imports the example's own `serve()` unchanged, adds an entry route that redirects to
+  `/dashboard#token=…` with that token, and presents each request to `Fieldwork.handle()`
+  as the loopback origin it expects. The example's source, CSP and origin checks are
+  untouched.
+- **Unprivileged app user.** The mounted checkout arrives mode `0700`, and Chromium's
+  sandbox refuses to start as root; the container's command relaxes the mount to `0755`
+  once at startup and then drops to the `app` user.
+- **`cap_add: SYS_ADMIN`.** Chromium's own sandbox needs a user namespace, which Docker's
+  default seccomp profile allows only with `CAP_SYS_ADMIN`. The sandbox stays enabled (it
+  is never bypassed with `--no-sandbox`); this mirrors what CI does for the same binaries
+  in `.github/scripts/setup-playwright-sandbox.sh`.
+- **Live API mode** needs `OPENAI_API_KEY` from the platform secret store (delivered to
+  `/run/base44/app.env`). `.env.base44-defaults` holds only the non-secret `OPENAI_MODEL`
+  default and is loaded first, so a dashboard value always wins. Without a key the
+  dashboard still runs Local rehearsal, which makes no API request.
