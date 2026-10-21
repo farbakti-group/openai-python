@@ -1,0 +1,36 @@
+# Base44 sandbox environment for this repository.
+#
+# `app` runs the live preview entry point (`.base44/preview-server.py`, port 3000).
+# The checkout is bind-mounted, so every edit is visible without a rebuild; only
+# the toolchain (Node, pnpm, uv, pinned CPython) comes from `.base44/Dockerfile`.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .base44/Dockerfile
+    working_dir: /app
+    # Dependencies are installed at startup from the committed lockfiles, after
+    # the bind mounts are in place, then the preview server is exec'd.
+    command:
+      - bash
+      - -lc
+      - |
+        set -euo pipefail
+        uv sync --locked --all-extras
+        pnpm install --frozen-lockfile --ignore-scripts
+        exec python3 .base44/preview-server.py --port 3000 --root /app
+    environment:
+      - BASE44_PREVIEW_MODE
+      - UV_LINK_MODE=copy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+    restart: on-failure
+    healthcheck:
+      # Probe the real preview response, not just an open port.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:3000/README.md"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
